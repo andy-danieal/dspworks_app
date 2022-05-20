@@ -1,0 +1,8 @@
+{
+  "name": "DSPWorks Automation Devices",
+  "content_in_root": false,
+  "render_readme": true,
+  "domains": ["fan"],
+  "homeassistant": "1.0.0",
+  "iot_class": "cloud_polling"
+}

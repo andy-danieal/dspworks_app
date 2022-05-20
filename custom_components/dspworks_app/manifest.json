@@ -1,0 +1,16 @@
+{
+  "domain": "dspworks_app",
+  "name": "DSPWorks Automation Devices",
+  "config_flow": true,
+  "documentation": "https://www.home-assistant.io/integrations/dspworks_app",
+  "requirements": [],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [],
+  "codeowners": [
+    "@dspworks-swaroop"
+  ],
+  "version": "1.0.0",
+  "iot_class": "cloud_polling"
+}
