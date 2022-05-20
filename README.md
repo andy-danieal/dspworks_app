@@ -1,10 +1,6 @@
 # DSPWorks Home Assistant Component
 This is a basic Home Assistant Custom Component for DSPWorks Fan, Sensors 💧 and Switches💡.
 
-[![HACS Shield][hacs-shield]](https://github.com/hacs/integration)
-[![GitHub][license-shield]](LICENSE.txt)
-[![Code style: black][black-shield]](https://github.com/psf/black)
-
 Feel free to ⭐️ this repo to get notified about the latest features!
 
 ## Installation
