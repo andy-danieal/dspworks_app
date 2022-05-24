@@ -4,7 +4,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from asyncio import Lock, TimeoutError as AsyncIOTimeoutError
 from datetime import timedelta
-import logging
+import logging, json
 from typing import Any
 
 from aiohttp import ClientError
@@ -13,20 +13,22 @@ from homeassistant.const import (
     ATTR_HW_VERSION,
     ATTR_MODEL,
     ATTR_NAME,
+    ATTR_ENTITY_ID,
     ATTR_SUGGESTED_AREA,
     ATTR_SW_VERSION,
     ATTR_VIA_DEVICE,
+    
 )
 from homeassistant.core import callback
 from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.event import async_track_time_interval
 
-from .const import DOMAIN
-from .utils import DSPDevice
+from .const import DOMAIN, DOMAIN_API_URL, GET_DEVICE
+from .utils import DSPDevice, Utils
 
 _LOGGER = logging.getLogger(__name__)
 
-_FALLBACK_SCAN_INTERVAL = timedelta(seconds=10)
+_FALLBACK_SCAN_INTERVAL = timedelta(seconds=30)
 
 
 class DSPEntity(Entity):
@@ -47,8 +49,14 @@ class DSPEntity(Entity):
         self._attr_name = device.name
 
     @property
+    def unique_id(self) -> str:
+        """Return a unique, dentifier of this device"""
+        return f"E-{self._device_id}"
+
+    @property
     def device_info(self) -> DeviceInfo:
         """Get a an HA device representing this DSP controlled device."""
+        device_version = json.loads(self._device._attrs['device_data'])
         device_info = DeviceInfo(
             manufacturer="DSPWorks",
             # type ignore: tuple items should not be Optional
@@ -58,6 +66,10 @@ class DSPEntity(Entity):
         if self.name is not None:
             device_info[ATTR_NAME] = self._device.name
 
+        device_info[ATTR_ENTITY_ID] = f"E-{self._device_id}"
+        device_info[ATTR_MODEL] = device_version['branch']
+        device_info[ATTR_HW_VERSION] = device_version['version']
+        
         return device_info
 
     async def async_update(self) -> None:
@@ -84,6 +96,16 @@ class DSPEntity(Entity):
 
     async def _async_update_from_api(self) -> None:
         """Fetch via the API."""
+        _LOGGER.warning("[DEVICE] UPDATE %s - %s", self._device_id, self.entity_id)
+        response = await Utils.async_dsp_api(self.hass, f"{DOMAIN_API_URL}{GET_DEVICE}", {"device_id": self._device_id})
+        
+        if(response['status'] == True):
+            state: dict = {
+                "power": True if int(response['device']['device_intensity']) > 0 else False,
+                "speed": int(response['device']['device_percentage_speed']),
+                "direction": False if response['device']['device_direction']=="1" else True
+            }
+            self._async_state_callback(state)
 
     @abstractmethod
     def _apply_state(self, state: dict) -> None:
@@ -94,11 +116,9 @@ class DSPEntity(Entity):
         """Process a state change."""
         self._initialized = True
         if not self.available:
-            _LOGGER.info("Entity %s has come back", self.entity_id)
+            _LOGGER.warning("Entity %s has come back", self.entity_id)
         self._attr_available = True
-        _LOGGER.debug(
-            "Device state for %s (%s) is:\n%s", self.name, self.entity_id, state
-        )
+        _LOGGER.warning("[DEVICE] STATE  %s - %s", self._device_id, state)
         self._apply_state(state)
 
     @callback

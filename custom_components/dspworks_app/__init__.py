@@ -17,13 +17,10 @@ from homeassistant.helpers import (
     device_registry as dr,
 )
 
+from .utils import Utils
 from .const import *
 
-
-import asyncio
-import aiohttp
-from aiohttp.hdrs import AUTHORIZATION
-import logging, time, json, hashlib, string
+import logging, json
 import voluptuous as vol
 from . import config_flow
 
@@ -52,13 +49,12 @@ CONFIG_SCHEMA = vol.Schema(
 
 PLATFORMS = [
     Platform.FAN,
-    Platform.SENSOR,
 ]
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the DSPWorks component."""
-    _LOGGER.warning("The 'dspworks_app' set_up is started!")
+    _LOGGER.warning("SETUP [START]: %s", json.dumps(config[DOMAIN]))
     hass.data[DOMAIN] = {}
 
     config_flow.DSPWorksFlowHandler.async_register_implementation(
@@ -66,8 +62,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         config_entry_oauth2_flow.LocalOAuth2Implementation(
             hass,
             DOMAIN,
-            OAUTH_CLIENT_ID,
-            OAUTH_CLIENT_SECRET,
+            config[DOMAIN][CONF_CLIENT_ID],
+            config[DOMAIN][CONF_CLIENT_SECRET],
             f"{DOMAIN_URL}{OAUTH_LOGIN_URL}",
             f"{DOMAIN_URL}{OAUTH_TOKEN_URL}",
         ),
@@ -78,31 +74,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up DSPWorks Automation Devices from a config entry."""
-    _LOGGER.warning("The 'dspworks_app'enter in setup! %s", hass.data[DOMAIN])
+    _LOGGER.warning("SETUP [ENTRY]: %s", entry.data['auth_implementation'])
 
     hass.data[DOMAIN][entry.entry_id] = {}
-    hass.data[DOMAIN][entry.entry_id]["access"] = entry.data
-
-    _LOGGER.warning("[{DOMAIN}API]- DISCOVERY_DEVICES %s", f"{DOMAIN_API_URL}{DISCOVERY_DEVICES}")
+    hass.data[DOMAIN]["token"] = entry.data['token']['access_token']
     devices = {}
 
-    try:
-        async with aiohttp.ClientSession(DOMAIN_IP) as session:
-            async with session.post(
-                f"{DOMAIN_API_URL}{DISCOVERY_DEVICES}",
-                headers={
-                    AUTHORIZATION: "Bearer 2120b969d666b6344d065885ed43807607028a5e"
-                },
-            ) as r:
-                response = await r.json()
-                _LOGGER.warning("API RESPONSE! %s", response)
-    except:
-        _LOGGER.warning("Login failed! retrying...")
-        time.sleep(5)
-        return
-    else:
-        devices.update({device["device_id"]: device for device in response["devices"]})
-        hass.data[DOMAIN][entry.entry_id]["devices"] = devices
+    response = await Utils.async_dsp_api(hass, f"{DOMAIN_API_URL}{DISCOVERY_DEVICES}")
+    devices.update({device["device_id"]: device for device in response["devices"]})
+    hass.data[DOMAIN][entry.entry_id]["devices"] = devices    
 
     # Backwards compat
     if "auth_implementation" not in entry.data:
@@ -110,11 +90,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry, data={**entry.data, "auth_implementation": DOMAIN}
         )
 
-    # implementation = (
-    #     await config_entry_oauth2_flow.async_get_config_entry_implementation(
-    #         hass, entry
-    #     )
-    # )
+    implementation = (
+        await config_entry_oauth2_flow.async_get_config_entry_implementation(
+            hass, entry
+        )
+    )
+    
+    session = config_entry_oauth2_flow.OAuth2Session(hass, entry, implementation)
+    await session.async_ensure_token_valid()
+    
     device_registry = dr.async_get(hass)
 
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)

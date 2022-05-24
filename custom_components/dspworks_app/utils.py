@@ -2,12 +2,43 @@
 from __future__ import annotations
 
 import logging
+import aiohttp
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from aiohttp.hdrs import AUTHORIZATION
 from typing import Any, cast
+from .const import DOMAIN, DOMAIN_IP
 
 MAX_REQUESTS = 6
 
 _LOGGER = logging.getLogger(__name__)
 
+class Utils:
+    async def async_dsp_api(hass, url, data=None):
+        try:
+            _LOGGER.debug("[API] REQUEST %s - %s", url, data)
+            _LOGGER.debug("[API] TOKEN %s", hass.data[DOMAIN]['token'])
+            #_LOGGER.warning("[API] TOKEN   %s", f"Bearer {entry.data['token']['access_token']}")
+            
+            async with aiohttp.ClientSession(DOMAIN_IP) as session:
+                async with session.post(
+                    url,
+                    headers={
+                        AUTHORIZATION: f"Bearer {hass.data[DOMAIN]['token']}"
+                    },
+                    json=data
+                ) as r:
+                    response = await r.json()
+                    _LOGGER.debug("[API] RESPONSE %s", response)
+        except:
+            raise ConfigEntryNotReady(f"Unable to connect to DSPWorks")
+        else:
+            if "error" in response:
+                if(response['error'] == 'invalid_token'):
+                    raise ConfigEntryAuthFailed(f"Error: Access token has been expired.")
+                else:
+                    raise ConfigEntryAuthFailed(f"Error: {response['error_description']}")
+            else:
+                return response
 
 class DSPDevice:
     """Helper device class to hold ID and attributes together."""
@@ -28,6 +59,11 @@ class DSPDevice:
     def name(self) -> str:
         """Get the name of this device."""
         return cast(str, self._attrs["device_name"])
+    
+    @property
+    def unique_id(self) -> str:
+        """Return a unique, dentifier of this device"""
+        return self.device_id
 
     @property
     def type(self) -> str:

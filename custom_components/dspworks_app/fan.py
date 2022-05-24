@@ -9,6 +9,8 @@ from aiohttp.client_exceptions import ClientResponseError
 import voluptuous as vol
 
 from homeassistant.components.fan import (
+    DIRECTION_FORWARD,
+    DIRECTION_REVERSE,
     FanEntity,
     FanEntityFeature,
 )
@@ -61,7 +63,7 @@ class DSPWorksFan(DSPEntity, FanEntity):
 
     def __init__(self, device: DSPDevice) -> None:
         """Create HA entity representing DSP fan."""
-        _LOGGER.warning("Fan HA Entity : %s", device)
+        #_LOGGER.warning("Fan HA Entity : %s", device)
         super().__init__(device)
 
         self._power: bool | None = None
@@ -94,7 +96,9 @@ class DSPWorksFan(DSPEntity, FanEntity):
         """Return the current speed percentage for the fan."""
         if not self._speed or not self._power:
             return 0
-        return min(100, max(0, 50))
+        return min(
+            100, max(0, ranged_value_to_percentage(self._speed_range, self._speed))
+        )
 
     @property
     def speed_count(self) -> int:
@@ -105,6 +109,11 @@ class DSPWorksFan(DSPEntity, FanEntity):
     def current_direction(self) -> str | None:
         """Return fan rotation direction."""
         direction = None
+        if self._direction == True:
+            direction = DIRECTION_FORWARD
+        elif self._direction == False:
+            direction = DIRECTION_REVERSE
+
         return direction
 
     async def async_set_percentage(self, percentage: int) -> None:

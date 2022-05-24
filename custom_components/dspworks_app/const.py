@@ -11,6 +11,7 @@ OAUTH_LOGIN_URL = "/Oauth2/Login/index"
 OAUTH_TOKEN_URL = "/Oauth2/Login/token"
 
 DISCOVERY_DEVICES = "/api/VayuAssistant/discovery"
+GET_DEVICE = "/api/VayuAssistant/state"
 
 SERVICE_SET_FAN_SPEED_TRACKED_STATE = "set_fan_speed_tracked_state"
 SERVICE_SET_POWER_TRACKED_STATE = "set_switch_power_tracked_state"
