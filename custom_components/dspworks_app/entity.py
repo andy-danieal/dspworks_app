@@ -7,17 +7,11 @@ from datetime import timedelta
 import logging, json
 from typing import Any
 
-from aiohttp import ClientError
-
 from homeassistant.const import (
     ATTR_HW_VERSION,
     ATTR_MODEL,
     ATTR_NAME,
     ATTR_ENTITY_ID,
-    ATTR_SUGGESTED_AREA,
-    ATTR_SW_VERSION,
-    ATTR_VIA_DEVICE,
-    
 )
 from homeassistant.core import callback
 from homeassistant.helpers.entity import DeviceInfo, Entity
@@ -28,7 +22,7 @@ from .utils import DSPDevice, Utils
 
 _LOGGER = logging.getLogger(__name__)
 
-_FALLBACK_SCAN_INTERVAL = timedelta(seconds=30)
+_FALLBACK_SCAN_INTERVAL = timedelta(seconds=10)
 
 
 class DSPEntity(Entity):
@@ -103,7 +97,7 @@ class DSPEntity(Entity):
             state: dict = {
                 "power": True if int(response['device']['device_intensity']) > 0 else False,
                 "speed": int(response['device']['device_percentage_speed']),
-                "direction": False if response['device']['device_direction']=="1" else True
+                "direction": True if response['device']['device_direction']=="1" else False
             }
             self._async_state_callback(state)
 
