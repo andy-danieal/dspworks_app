@@ -15,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 class Utils:
     async def async_dsp_api(hass, url, data=None):
         try:
-            _LOGGER.warning("[API] REQUEST %s - %s", url, data)
+            _LOGGER.debug("[API] REQUEST %s - %s", url, data)
             _LOGGER.debug("[API] TOKEN %s", hass.data[DOMAIN]['token'])
             
             async with aiohttp.ClientSession(DOMAIN_IP) as session:

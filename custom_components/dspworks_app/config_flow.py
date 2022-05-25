@@ -41,6 +41,10 @@ class DSPWorksFlowHandler(
 
         return await super().async_step_user(user_input)
     
+    async def async_oauth_create_entry(self, data: dict[str, Any]) -> FlowResult:
+        """Create an entry for DSPWorks."""
+        return self.async_create_entry(title="DSPWorks APP", data=data)
+    
     async def async_step_reauth(self, entry: dict[str, Any]) -> FlowResult:
         """Perform reauth upon migration of old entries."""
         self.reauth_entry = self.hass.config_entries.async_get_entry(

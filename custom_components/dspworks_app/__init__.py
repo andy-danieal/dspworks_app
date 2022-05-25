@@ -5,6 +5,7 @@ from datetime import timedelta
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    CONF_NAME,
     CONF_CLIENT_ID,
     CONF_CLIENT_SECRET,
     Platform,
@@ -35,6 +36,7 @@ CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: vol.Schema(
             {
+                vol.Optional(CONF_NAME, default="DSPWorks App"): cv.string,
                 vol.Inclusive(
                     CONF_CLIENT_ID, "oauth", default=OAUTH_CLIENT_ID
                 ): cv.string,
@@ -54,7 +56,7 @@ PLATFORMS = [
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the DSPWorks component."""
-    _LOGGER.warning("SETUP [START]: %s", json.dumps(config[DOMAIN]))
+    _LOGGER.debug("SETUP [START]: %s", json.dumps(config[DOMAIN]))
     hass.data[DOMAIN] = {}
 
     config_flow.DSPWorksFlowHandler.async_register_implementation(
@@ -74,7 +76,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up DSPWorks Automation Devices from a config entry."""
-    _LOGGER.warning("SETUP [ENTRY]: %s", entry.data['auth_implementation'])
+    _LOGGER.debug("SETUP [ENTRY]: %s", entry.data['auth_implementation'])
 
     hass.data[DOMAIN][entry.entry_id] = {}
     hass.data[DOMAIN]["token"] = entry.data['token']['access_token']

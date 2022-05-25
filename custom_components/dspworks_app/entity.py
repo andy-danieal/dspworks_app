@@ -77,7 +77,7 @@ class DSPEntity(Entity):
 
         assert self._update_lock is not None
         if self._update_lock.locked():
-            _LOGGER.warning(
+            _LOGGER.debug(
                 "Updating %s took longer than the scheduled update interval %s",
                 self.entity_id,
                 _FALLBACK_SCAN_INTERVAL,
@@ -90,7 +90,7 @@ class DSPEntity(Entity):
 
     async def _async_update_from_api(self) -> None:
         """Fetch via the API."""
-        _LOGGER.warning("[DEVICE] UPDATE %s - %s", self._device_id, self.entity_id)
+        _LOGGER.debug("[DEVICE] UPDATE %s - %s", self._device_id, self.entity_id)
         response = await Utils.async_dsp_api(self.hass, f"{DOMAIN_API_URL}{GET_DEVICE}", {"device_id": self._device_id})
         
         if(response['status'] == True):
@@ -110,9 +110,9 @@ class DSPEntity(Entity):
         """Process a state change."""
         self._initialized = True
         if not self.available:
-            _LOGGER.warning("Entity %s has come back", self.entity_id)
+            _LOGGER.debug("Entity %s has come back", self.entity_id)
         self._attr_available = True
-        _LOGGER.warning("[DEVICE] STATE  %s - %s", self._device_id, state)
+        _LOGGER.debug("[DEVICE] STATE  %s - %s", self._device_id, state)
         self._apply_state(state)
 
     @callback
