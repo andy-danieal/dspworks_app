@@ -5,6 +5,11 @@ Feel free to ⭐️ this repo to get notified about the latest features!
 
 ## Installation
 
+Install HACS - https://hacs.xyz/docs/use/configuration/basic/
+
+
+![Screenshot from 2024-09-06 10-41-35](https://github.com/user-attachments/assets/954aec0e-d645-448b-acd7-8409500c9093)
+
 You can either install this integration as an HACS custom component or install it mannually
 ### Installing with HACS
 * Go to the `HACS` tab and select `Integrations`
